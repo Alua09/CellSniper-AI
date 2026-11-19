@@ -245,7 +245,6 @@ def create_3d_plot(result, max_nodes=35):
         marker=dict(size=node_size, color=node_color, opacity=0.9), hoverinfo='text', hovertext=node_text
     )
 
-    # Аккуратный ген-хаб
     hub_glow_trace = go.Scatter3d(
         x=hub_x, y=hub_y, z=hub_z, mode='markers',
         marker=dict(size=22, color='#ef4444', opacity=0.4, symbol='circle'), hoverinfo='none'
@@ -290,7 +289,6 @@ Authors: Alua Tolegenova & Danaiya Anitova
 =================================================="""
 
 
-# Шапка приложения закреплена в самом верху без обрезания
 st.markdown("<div style='height: 2px;'></div>", unsafe_allow_html=True)
 header_col1, header_col2 = st.columns([0.06, 0.94])
 with header_col1:
@@ -304,7 +302,6 @@ with header_col2:
     </div>
     """, unsafe_allow_html=True)
 
-# Боковая панель управления с максимумом понятных подсказок
 st.sidebar.markdown("### 🎛️ Control Panel")
 selected_file = st.sidebar.selectbox(
     "Select Patient Profile",
@@ -333,18 +330,12 @@ uploaded_file = st.sidebar.file_uploader(
 file_to_load = None
 display_name = selected_file
 
-if uploaded_file is not Levels_none := uploaded_file is not None:
+if uploaded_file is not None:
     file_to_load = uploaded_file
     display_name = uploaded_file.name
-else:
-    # Исправление логики загрузки файла без опечаток
-    if uploaded_file is not None:
-        file_to_load = uploaded_file
-        display_name = uploaded_file.name
-    elif selected_file and selected_file != "No_files_found.tsv":
-        file_to_load = os.path.join(BASE_DIR, selected_file)
+elif selected_file and selected_file != "No_files_found.tsv":
+    file_to_load = os.path.join(BASE_DIR, selected_file)
 
-# Основная рабочая область
 col1, col2 = st.columns([1, 1], gap="medium")
 
 if run_btn and file_to_load:
@@ -432,7 +423,6 @@ if res:
 else:
     st.info("👆 Выберите профиль пациентки на панели слева и нажмите кнопку **'Run Topology Analysis'** для запуска.")
 
-# Благодарность сайту cBioPortal в футере
 st.markdown("""
 <div class="footer-note">
     🙏 Special thanks to <a href="https://www.cbioportal.org/study/summary?id=brca_tcga_pan_can_atlas_2018" target="_blank">cBioPortal (TCGA PanCanAtlas 2018)</a> for providing the clinical genomic datasets.
