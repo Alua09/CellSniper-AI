@@ -248,7 +248,7 @@ st.markdown("""
 # Боковая панель управления (Control Panel)
 st.sidebar.markdown("### 🎛️ Control Panel")
 selected_file = st.sidebar.selectbox("Select Patient Profile", current_tsv_list)
-slider_val = st.sidebar.slider("3D Network Density", min_t=10, max_value=75, value=35, step=5)
+slider_val = st.sidebar.slider("3D Network Density", min_value=10, max_value=75, value=35, step=5)
 run_clicked = st.sidebar.button("🚀 Run Topology Analysis", type="primary")
 
 st.sidebar.markdown("---")
