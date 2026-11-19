@@ -1,6 +1,6 @@
 import os
 import glob
-import base64
+import time
 import pandas as pd
 import networkx as nx
 import plotly.graph_objects as go
@@ -16,9 +16,8 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    /* Убираем верхний отступ для абсолютной видимости шапки */
     .block-container {
-        padding-top: 0rem !important;
+        padding-top: 0.4rem !important;
         padding-bottom: 0.4rem !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
@@ -289,19 +288,20 @@ Authors: Alua Tolegenova & Danaiya Anitova
 =================================================="""
 
 
-st.markdown("<div style='height: 2px;'></div>", unsafe_allow_html=True)
-header_col1, header_col2 = st.columns([0.06, 0.94])
+# Гарантированно видимая шапка через стандартные элементы Streamlit
+header_col1, header_col2 = st.columns([0.07, 0.93])
 with header_col1:
     if os.path.exists("images.jpeg"):
-        st.image("images.jpeg", width=40)
+        st.image("images.jpeg", width=45)
 with header_col2:
-    st.markdown("""
-    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px 10px;">
-        <h3 style="margin: 0; color: #0f172a; font-size: 15px;">🧬 CellSniper AI <span style="font-size: 11px; color: #2563eb;">[Team: The Snipers | KIMEP AI Challenge 2026]</span></h3>
-        <p style="margin: 1px 0 0 0; color: #475569; font-style: italic; font-size: 10px;">Precision Clinical Decision Support System via 3D Network Topology & OncoKB Mapping.</p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        "### 🧬 CellSniper AI <span style='font-size: 12px; color: #2563eb;'>[Team: The Snipers | KIMEP AI Challenge 2026]</span>",
+        unsafe_allow_html=True)
+    st.caption("Precision Clinical Decision Support System via 3D Network Topology & OncoKB Mapping.")
 
+st.markdown("---")
+
+# Боковая панель управления
 st.sidebar.markdown("### 🎛️ Control Panel")
 selected_file = st.sidebar.selectbox(
     "Select Patient Profile",
@@ -336,10 +336,18 @@ if uploaded_file is not None:
 elif selected_file and selected_file != "No_files_found.tsv":
     file_to_load = os.path.join(BASE_DIR, selected_file)
 
+# Основная рабочая область
 col1, col2 = st.columns([1, 1], gap="medium")
 
 if run_btn and file_to_load:
-    res, status = calculate_hub(file_to_load)
+    # Эффектная анимация пошагового появления для жюри
+    with st.spinner("🔄 Инициализация 3D-модели раковой клетки..."):
+        time.sleep(0.4)
+    with st.spinner("🔗 Построение интерактивной белок-белковой сети (PPI)..."):
+        time.sleep(0.4)
+    with st.spinner("🎯 Вычисление центральности и поиск ген-хаба..."):
+        res, status = calculate_hub(file_to_load)
+        time.sleep(0.3)
     st.session_state['res'] = res
     st.session_state['display_name'] = display_name
 elif 'res' not in st.session_state:
@@ -360,7 +368,7 @@ if res:
             <b>📊 Mutations:</b> <span style="font-family: monospace;" title="Общее число найденных мутаций">{res['total_mutations']}</span> | 
             <b>🎯 Hub:</b> <span style="font-family: monospace; background: #fee2e2; color: #991b1b; padding: 1px 3px; border-radius: 3px; font-weight: bold;" title="Главный ключевой ген-регулятор (узел), управляющий сетью опухоли">{res['hub']}</span><br>
             <b>⚡ Risk:</b> <span style="font-family: monospace; color: #7c2d12; font-weight: bold;" title="Прогноз агрессивности течения болезни на основе структуры сети">{res['risk_score']}</span> | 
-            <b>💊 OncoKB:</b> <span style="font-family: monospace; color: #059669; font-weight: bold;" title="Уровень клинической доказанности: Level 1 (есть одобренное FDA лекарство), Level 2 (стандартная терапия), Level 3 (клинические испытания / резистентность)">{res['max_oncokb']}</span>
+            <b>💊 OncoKB:</b> <span style="font-family: monospace; color: #059669; font-weight: bold;" title="Уровень клинической доказанности: Level 1 (FDA-Approved), Level 2 (Standard Care), Level 3 (Clinical Trials)">{res['max_oncokb']}</span>
         </div>
         """, unsafe_allow_html=True)
 
