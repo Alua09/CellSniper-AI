@@ -16,9 +16,8 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    /* Идеальный отступ сверху, чтобы шапка была полностью видна и не пряталась */
     .block-container {
-        padding-top: 1.5rem !important;
+        padding-top: 1rem !important;
         padding-bottom: 0.4rem !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
@@ -39,7 +38,7 @@ st.markdown("""
         font-size: 10px;
         color: #64748b;
         text-align: center;
-        margin-top: 2px;
+        margin-top: 4px;
     }
     /* Пастельные цвета для вкладок */
     div[data-baseweb="tab-list"] button:nth-child(1) {
@@ -173,7 +172,8 @@ def calculate_hub(file_path):
         return None, str(e)
 
 
-def create_animated_plot(result, max_nodes=35, stage=3):
+def create_animated_plot(result, max_nodes=35):
+    """Создает график с плавными кадрами анимации (Frames) построения 3Д клетки и сети"""
     if not result:
         return go.Figure()
 
@@ -204,22 +204,20 @@ def create_animated_plot(result, max_nodes=35, stage=3):
         x=xs, y=ys, z=zs, opacity=0.14, showscale=False, hoverinfo='none', colorscale='Burgyl'
     )
 
-    data_traces = [cancer_cell_surface]
+    # Координаты связей (edges)
+    edge_x, edge_y, edge_z = [], [], []
+    for edge in G_sub.edges():
+        if edge[0] in pos_3d and edge[1] in pos_3d:
+            x0, y0, z0 = pos_3d[edge[0]]
+            x1, y1, z1 = pos_3d[edge[1]]
+            edge_x.extend([x0, x1, None])
+            edge_y.extend([y0, y1, None])
+            edge_z.extend([z0, z1, None])
 
-    # Этап 2 и 3: Добавляем связи (edges) и узлы (nodes)
-    if stage >= 2:
-        edge_x, edge_y, edge_z = [], [], []
-        for edge in G_sub.edges():
-            if edge[0] in pos_3d and edge[1] in pos_3d:
-                x0, y0, z0 = pos_3d[edge[0]]
-                x1, y1, z1 = pos_3d[edge[1]]
-                edge_x.extend([x0, x1, None])
-                edge_y.extend([y0, y1, None])
-                edge_z.extend([z0, z1, None])
-        edge_trace = go.Scatter3d(x=edge_x, y=edge_y, z=edge_z, mode='lines', line=dict(color='#0284c7', width=1.2),
-                                  hoverinfo='none')
-        data_traces.append(edge_trace)
+    edge_trace = go.Scatter3d(x=edge_x, y=edge_y, z=edge_z, mode='lines', line=dict(color='#0284c7', width=1.2),
+                              hoverinfo='none')
 
+    # Координаты обычных узлов и хаба
     node_x, node_y, node_z, node_text, node_color, node_size, node_labels = [], [], [], [], [], [], []
     sorted_nodes = sorted(G_sub.nodes(), key=lambda n: centrality.get(n, 0), reverse=True)
     top_labels = set(sorted_nodes[:10])
@@ -243,36 +241,78 @@ def create_animated_plot(result, max_nodes=35, stage=3):
                 node_size.append(7)
                 node_labels.append(node if node in top_labels else '')
 
-    if stage >= 2:
-        node_trace = go.Scatter3d(
-            x=node_x, y=node_y, z=node_z, mode='markers+text', text=node_labels,
-            textposition='top center', textfont=dict(size=9, color='#0f172a', family='Arial Black'),
-            marker=dict(size=node_size, color=node_color, opacity=0.9), hoverinfo='text', hovertext=node_text
-        )
-        data_traces.append(node_trace)
+    node_trace = go.Scatter3d(
+        x=node_x, y=node_y, z=node_z, mode='markers+text', text=node_labels,
+        textposition='top center', textfont=dict(size=9, color='#0f172a', family='Arial Black'),
+        marker=dict(size=node_size, color=node_color, opacity=0.9), hoverinfo='text', hovertext=node_text
+    )
 
-    # Этап 3: Финальный поиск и подсвечивание ген-хаба
-    if stage >= 3:
-        hub_glow_trace = go.Scatter3d(
-            x=hub_x, y=hub_y, z=hub_z, mode='markers',
-            marker=dict(size=22, color='#ef4444', opacity=0.4, symbol='circle'), hoverinfo='none'
-        )
-        hub_trace = go.Scatter3d(
-            x=hub_x, y=hub_y, z=hub_z, mode='markers+text', text=[f"★ {hub_gene} (HUB)"],
-            textposition='top center', textfont=dict(size=10, color='#dc2626', family='Arial Black'),
-            marker=dict(size=11, color='#dc2626', opacity=0.98, symbol='circle', line=dict(color='#ffffff', width=2)),
-            hoverinfo='text'
-        )
-        data_traces.extend([hub_glow_trace, hub_trace])
+    hub_glow_trace = go.Scatter3d(
+        x=hub_x, y=hub_y, z=hub_z, mode='markers',
+        marker=dict(size=22, color='#ef4444', opacity=0.4, symbol='circle'), hoverinfo='none'
+    )
+    hub_trace = go.Scatter3d(
+        x=hub_x, y=hub_y, z=hub_z, mode='markers+text', text=[f"★ {hub_gene} (HUB)"],
+        textposition='top center', textfont=dict(size=10, color='#dc2626', family='Arial Black'),
+        marker=dict(size=11, color='#dc2626', opacity=0.98, symbol='circle', line=dict(color='#ffffff', width=2)),
+        hoverinfo='text'
+    )
 
-    fig = go.Figure(data=data_traces, layout=go.Layout(
-        showlegend=False, margin=dict(l=0, r=0, t=0, b=0), height=250,
-        scene=dict(xaxis=dict(showbackground=False, visible=False),
-                   yaxis=dict(showbackground=False, visible=False),
-                   zaxis=dict(showbackground=False, visible=False),
-                   bgcolor='rgba(0,0,0,0)'),
-        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)'
-    ))
+    # Определяем кадры (Frames) для плавной нативной анимации Plotly
+    frames = [
+        # Кадр 1: Только мембрана клетки
+        go.Frame(data=[cancer_cell_surface,
+                       go.Scatter3d(x=[], y=[], z=[], mode='markers'),
+                       go.Scatter3d(x=[], y=[], z=[], mode='lines'),
+                       go.Scatter3d(x=[], y=[], z=[], mode='markers'),
+                       go.Scatter3d(x=[], y=[], z=[], mode='markers')], name='frame1'),
+        # Кадр 2: Появление мембраны + узлов мутаций
+        go.Frame(data=[cancer_cell_surface,
+                       node_trace,
+                       go.Scatter3d(x=[], y=[], z=[], mode='lines'),
+                       go.Scatter3d(x=[], y=[], z=[], mode='markers'),
+                       go.Scatter3d(x=[], y=[], z=[], mode='markers')], name='frame2'),
+        # Кадр 3: Прочерчивание связей (PPI Network)
+        go.Frame(data=[cancer_cell_surface,
+                       node_trace,
+                       edge_trace,
+                       go.Scatter3d(x=[], y=[], z=[], mode='markers'),
+                       go.Scatter3d(x=[], y=[], z=[], mode='markers')], name='frame3'),
+        # Кадр 4: Финальный этап — нахождение и подсветка ген-хаба
+        go.Frame(data=[cancer_cell_surface,
+                       node_trace,
+                       edge_trace,
+                       hub_glow_trace,
+                       hub_trace], name='frame4')
+    ]
+
+    fig = go.Figure(
+        data=[cancer_cell_surface,
+              go.Scatter3d(x=[], y=[], z=[], mode='markers'),
+              go.Scatter3d(x=[], y=[], z=[], mode='lines'),
+              go.Scatter3d(x=[], y=[], z=[], mode='markers'),
+              go.Scatter3d(x=[], y=[], z=[], mode='markers')],
+        frames=frames,
+        layout=go.Layout(
+            showlegend=False, margin=dict(l=0, r=0, t=0, b=0), height=250,
+            scene=dict(xaxis=dict(showbackground=False, visible=False),
+                       yaxis=dict(showbackground=False, visible=False),
+                       zaxis=dict(showbackground=False, visible=False),
+                       bgcolor='rgba(0,0,0,0)'),
+            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+            updatemenus=[dict(
+                type="buttons",
+                showactive=False,
+                buttons=[dict(
+                    label="Play Animation",
+                    method="animate",
+                    args=[None, {"frame": {"duration": 600, "redraw": "true"}, "fromcurrent": True,
+                                 "transition": {"duration": 400}}]}
+    ],
+    x = 0.05, y = 0.15, visible = False
+    )]
+    )
+    )
     return fig
 
 
@@ -298,20 +338,15 @@ Authors: Alua Tolegenova & Danaiya Anitova
 =================================================="""
 
 
-# Идеально видимая и красивая шапка с фиксированным контейнером для логотипа
-st.markdown("""
-<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-    <div style="flex-shrink: 0; width: 45px; height: 45px; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f1f5f9;">
-""")
-
-col_logo, col_title = st.columns([0.06, 0.94])
-with col_logo:
+# Чистая и безупречная шапка через нативные колонки Streamlit (без HTML-багов)
+header_col1, header_col2 = st.columns([0.08, 0.92])
+with header_col1:
     if os.path.exists("images.jpeg"):
-        st.image("images.jpeg", width=45)
-with col_title:
+        st.image("images.jpeg", width=55)
+with header_col2:
     st.markdown("""
-        <h2 style="margin: 0; color: #0f172a; font-size: 20px; font-weight: 800;">🧬 CellSniper AI <span style="font-size: 12px; color: #2563eb; background: #eff6ff; padding: 2px 8px; border-radius: 6px;">[Team: The Snipers | KIMEP AI Challenge 2026]</span></h2>
-        <p style="margin: 2px 0 0 0; color: #475569; font-style: italic; font-size: 11px;">Precision Clinical Decision Support System via 3D Network Topology & OncoKB Mapping.</p>
+    ### 🧬 CellSniper AI <span style="font-size: 11px; color: #2563eb; background: #eff6ff; padding: 2px 8px; border-radius: 6px;">[Team: The Snipers | KIMEP AI Challenge 2026]</span>
+    *Precision Clinical Decision Support System via 3D Network Topology & OncoKB Mapping.*
     """, unsafe_allow_html=True)
 
 st.markdown("---")
@@ -360,21 +395,19 @@ plot_placeholder = col1.empty()
 if run_btn and file_to_load:
     res, status = calculate_hub(file_to_load)
 
-    # ЖИВАЯ АНИМАЦИЯ ПОСТРОЕНИЯ В РЕАЛЬНОМ ВРЕМЕНИ ДЛЯ ЖЮРИ:
-    with st.spinner("🌐 Шаг 1/3: Рендеринг 3D-мембраны раковой клетки..."):
-        fig_stage1 = create_animated_plot(res, slider_val, stage=1)
-        plot_placeholder.plotly_chart(fig_stage1, use_container_width=True, config={'displayModeBar': False})
-        time.sleep(0.6)
+    # Генерация анимированного графика с плавными кадрами (Plotly Frames)
+    fig_animated = create_animated_plot(res, slider_val)
 
-    with st.spinner("🔗 Шаг 2/3: Построение белок-белковых связей (PPI Network)..."):
-        fig_stage2 = create_animated_plot(res, slider_val, stage=2)
-        plot_placeholder.plotly_chart(fig_stage2, use_container_width=True, config={'displayModeBar': False})
-        time.sleep(0.6)
+    with st.spinner("🌐 Построение 3D-модели раковой клетки и анализ связей..."):
+        time.sleep(0.3)
 
-    with st.spinner("🎯 Шаг 3/3: Вычисление центральности и активация ген-хаба..."):
-        fig_stage3 = create_animated_plot(res, slider_val, stage=3)
-        plot_placeholder.plotly_chart(fig_stage3, use_container_width=True, config={'displayModeBar': False})
-        time.sleep(0.4)
+    # Отображаем график с включенной нативной анимацией кадров Plotly
+    plot_placeholder.plotly_chart(
+        fig_animated,
+        use_container_width=True,
+        config={'displayModeBar': False},
+        theme=None
+    )
 
     st.session_state['res'] = res
     st.session_state['display_name'] = display_name
