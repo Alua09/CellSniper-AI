@@ -173,7 +173,6 @@ def calculate_hub(file_path):
 
 
 def create_animated_plot(result, max_nodes=35):
-    """Создает график с плавными кадрами анимации (Frames) построения 3Д клетки и сети"""
     if not result:
         return go.Figure()
 
@@ -204,7 +203,6 @@ def create_animated_plot(result, max_nodes=35):
         x=xs, y=ys, z=zs, opacity=0.14, showscale=False, hoverinfo='none', colorscale='Burgyl'
     )
 
-    # Координаты связей (edges)
     edge_x, edge_y, edge_z = [], [], []
     for edge in G_sub.edges():
         if edge[0] in pos_3d and edge[1] in pos_3d:
@@ -217,7 +215,6 @@ def create_animated_plot(result, max_nodes=35):
     edge_trace = go.Scatter3d(x=edge_x, y=edge_y, z=edge_z, mode='lines', line=dict(color='#0284c7', width=1.2),
                               hoverinfo='none')
 
-    # Координаты обычных узлов и хаба
     node_x, node_y, node_z, node_text, node_color, node_size, node_labels = [], [], [], [], [], [], []
     sorted_nodes = sorted(G_sub.nodes(), key=lambda n: centrality.get(n, 0), reverse=True)
     top_labels = set(sorted_nodes[:10])
@@ -258,27 +255,22 @@ def create_animated_plot(result, max_nodes=35):
         hoverinfo='text'
     )
 
-    # Определяем кадры (Frames) для плавной нативной анимации Plotly
     frames = [
-        # Кадр 1: Только мембрана клетки
         go.Frame(data=[cancer_cell_surface,
                        go.Scatter3d(x=[], y=[], z=[], mode='markers'),
                        go.Scatter3d(x=[], y=[], z=[], mode='lines'),
                        go.Scatter3d(x=[], y=[], z=[], mode='markers'),
                        go.Scatter3d(x=[], y=[], z=[], mode='markers')], name='frame1'),
-        # Кадр 2: Появление мембраны + узлов мутаций
         go.Frame(data=[cancer_cell_surface,
                        node_trace,
                        go.Scatter3d(x=[], y=[], z=[], mode='lines'),
                        go.Scatter3d(x=[], y=[], z=[], mode='markers'),
                        go.Scatter3d(x=[], y=[], z=[], mode='markers')], name='frame2'),
-        # Кадр 3: Прочерчивание связей (PPI Network)
         go.Frame(data=[cancer_cell_surface,
                        node_trace,
                        edge_trace,
                        go.Scatter3d(x=[], y=[], z=[], mode='markers'),
                        go.Scatter3d(x=[], y=[], z=[], mode='markers')], name='frame3'),
-        # Кадр 4: Финальный этап — нахождение и подсветка ген-хаба
         go.Frame(data=[cancer_cell_surface,
                        node_trace,
                        edge_trace,
@@ -307,11 +299,11 @@ def create_animated_plot(result, max_nodes=35):
                     label="Play Animation",
                     method="animate",
                     args=[None, {"frame": {"duration": 600, "redraw": "true"}, "fromcurrent": True,
-                                 "transition": {"duration": 400}}]}
-    ],
-    x = 0.05, y = 0.15, visible = False
-    )]
-    )
+                                 "transition": {"duration": 400}}]
+                )],
+                x=0.05, y=0.15, visible=False
+            )]
+        )
     )
     return fig
 
@@ -338,7 +330,6 @@ Authors: Alua Tolegenova & Danaiya Anitova
 =================================================="""
 
 
-# Чистая и безупречная шапка через нативные колонки Streamlit (без HTML-багов)
 header_col1, header_col2 = st.columns([0.08, 0.92])
 with header_col1:
     if os.path.exists("images.jpeg"):
@@ -351,7 +342,6 @@ with header_col2:
 
 st.markdown("---")
 
-# Боковая панель управления
 st.sidebar.markdown("### 🎛️ Control Panel")
 selected_file = st.sidebar.selectbox(
     "Select Patient Profile",
@@ -386,22 +376,16 @@ if uploaded_file is not None:
 elif selected_file and selected_file != "No_files_found.tsv":
     file_to_load = os.path.join(BASE_DIR, selected_file)
 
-# Основная рабочая область
 col1, col2 = st.columns([1, 1], gap="medium")
-
-# Контейнер для графика
 plot_placeholder = col1.empty()
 
 if run_btn and file_to_load:
     res, status = calculate_hub(file_to_load)
-
-    # Генерация анимированного графика с плавными кадрами (Plotly Frames)
     fig_animated = create_animated_plot(res, slider_val)
 
     with st.spinner("🌐 Построение 3D-модели раковой клетки и анализ связей..."):
         time.sleep(0.3)
 
-    # Отображаем график с включенной нативной анимацией кадров Plotly
     plot_placeholder.plotly_chart(
         fig_animated,
         use_container_width=True,
