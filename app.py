@@ -16,8 +16,9 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+    /* Безопасный отступ сверху, чтобы шапка никогда не перекрывалась панелью Streamlit */
     .block-container {
-        padding-top: 0.4rem !important;
+        padding-top: 1.8rem !important;
         padding-bottom: 0.4rem !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
@@ -172,7 +173,7 @@ def calculate_hub(file_path):
         return None, str(e)
 
 
-def create_3d_plot(result, max_nodes=35):
+def create_animated_plot(result, max_nodes=35, stage=3):
     if not result:
         return go.Figure()
 
@@ -203,18 +204,23 @@ def create_3d_plot(result, max_nodes=35):
         x=xs, y=ys, z=zs, opacity=0.14, showscale=False, hoverinfo='none', colorscale='Burgyl'
     )
 
-    edge_x, edge_y, edge_z = [], [], []
-    for edge in G_sub.edges():
-        if edge[0] in pos_3d and edge[1] in pos_3d:
-            x0, y0, z0 = pos_3d[edge[0]]
-            x1, y1, z1 = pos_3d[edge[1]]
-            edge_x.extend([x0, x1, None])
-            edge_y.extend([y0, y1, None])
-            edge_z.extend([z0, z1, None])
+    data_traces = [cancer_cell_surface]
 
-    edge_trace = go.Scatter3d(x=edge_x, y=edge_y, z=edge_z, mode='lines', line=dict(color='#0284c7', width=1.2),
-                              hoverinfo='none')
+    # Этап 2 и 3: Добавляем связи (edges)
+    if stage >= 2:
+        edge_x, edge_y, edge_z = [], [], []
+        for edge in G_sub.edges():
+            if edge[0] in pos_3d and edge[1] in pos_3d:
+                x0, y0, z0 = pos_3d[edge[0]]
+                x1, y1, z1 = pos_3d[edge[1]]
+                edge_x.extend([x0, x1, None])
+                edge_y.extend([y0, y1, None])
+                edge_z.extend([z0, z1, None])
+        edge_trace = go.Scatter3d(x=edge_x, y=edge_y, z=edge_z, mode='lines', line=dict(color='#0284c7', width=1.2),
+                                  hoverinfo='none')
+        data_traces.append(edge_trace)
 
+    # Узлы (ноды)
     node_x, node_y, node_z, node_text, node_color, node_size, node_labels = [], [], [], [], [], [], []
     sorted_nodes = sorted(G_sub.nodes(), key=lambda n: centrality.get(n, 0), reverse=True)
     top_labels = set(sorted_nodes[:10])
@@ -243,19 +249,23 @@ def create_3d_plot(result, max_nodes=35):
         textposition='top center', textfont=dict(size=9, color='#0f172a', family='Arial Black'),
         marker=dict(size=node_size, color=node_color, opacity=0.9), hoverinfo='text', hovertext=node_text
     )
+    data_traces.append(node_trace)
 
-    hub_glow_trace = go.Scatter3d(
-        x=hub_x, y=hub_y, z=hub_z, mode='markers',
-        marker=dict(size=22, color='#ef4444', opacity=0.4, symbol='circle'), hoverinfo='none'
-    )
-    hub_trace = go.Scatter3d(
-        x=hub_x, y=hub_y, z=hub_z, mode='markers+text', text=[f"★ {hub_gene} (HUB)"],
-        textposition='top center', textfont=dict(size=10, color='#dc2626', family='Arial Black'),
-        marker=dict(size=11, color='#dc2626', opacity=0.98, symbol='circle', line=dict(color='#ffffff', width=2)),
-        hoverinfo='text'
-    )
+    # Этап 3: Финальный поиск и подсвечивание ген-хаба
+    if stage >= 3:
+        hub_glow_trace = go.Scatter3d(
+            x=hub_x, y=hub_y, z=hub_z, mode='markers',
+            marker=dict(size=22, color='#ef4444', opacity=0.4, symbol='circle'), hoverinfo='none'
+        )
+        hub_trace = go.Scatter3d(
+            x=hub_x, y=hub_y, z=hub_z, mode='markers+text', text=[f"★ {hub_gene} (HUB)"],
+            textposition='top center', textfont=dict(size=10, color='#dc2626', family='Arial Black'),
+            marker=dict(size=11, color='#dc2626', opacity=0.98, symbol='circle', line=dict(color='#ffffff', width=2)),
+            hoverinfo='text'
+        )
+        data_traces.extend([hub_glow_trace, hub_trace])
 
-    fig = go.Figure(data=[cancer_cell_surface, edge_trace, node_trace, hub_glow_trace, hub_trace], layout=go.Layout(
+    fig = go.Figure(data=data_traces, layout=go.Layout(
         showlegend=False, margin=dict(l=0, r=0, t=0, b=0), height=250,
         scene=dict(xaxis=dict(showbackground=False, visible=False),
                    yaxis=dict(showbackground=False, visible=False),
@@ -288,7 +298,7 @@ Authors: Alua Tolegenova & Danaiya Anitova
 =================================================="""
 
 
-# Гарантированно видимая шапка через стандартные элементы Streamlit
+# Абсолютно видимая шапка проекта
 header_col1, header_col2 = st.columns([0.07, 0.93])
 with header_col1:
     if os.path.exists("images.jpeg"):
@@ -339,29 +349,41 @@ elif selected_file and selected_file != "No_files_found.tsv":
 # Основная рабочая область
 col1, col2 = st.columns([1, 1], gap="medium")
 
+# Контейнер для графика в реальном времени
+plot_placeholder = col1.empty()
+
 if run_btn and file_to_load:
-    # Эффектная анимация пошагового появления для жюри
-    with st.spinner("🔄 Инициализация 3D-модели раковой клетки..."):
-        time.sleep(0.4)
-    with st.spinner("🔗 Построение интерактивной белок-белковой сети (PPI)..."):
-        time.sleep(0.4)
-    with st.spinner("🎯 Вычисление центральности и поиск ген-хаба..."):
-        res, status = calculate_hub(file_to_load)
-        time.sleep(0.3)
+    res, status = calculate_hub(file_to_load)
+
+    # ЭТАП 1: Появление 3D-мембраны клетки и точек мутаций
+    fig_stage1 = create_animated_plot(res, slider_val, stage=1)
+    plot_placeholder.plotly_chart(fig_stage1, use_container_width=True, config={'displayModeBar': False})
+    time.sleep(0.4)
+
+    # ЭТАП 2: В реальном времени прорисовываются связи (PPI Network)
+    fig_stage2 = create_animated_plot(res, slider_val, stage=2)
+    plot_placeholder.plotly_chart(fig_stage2, use_container_width=True, config={'displayModeBar': False})
+    time.sleep(0.4)
+
+    # ЭТАП 3: Нахождение и яркая вспышка главного ген-хаба
+    fig_stage3 = create_animated_plot(res, slider_val, stage=3)
+    plot_placeholder.plotly_chart(fig_stage3, use_container_width=True, config={'displayModeBar': False})
+
     st.session_state['res'] = res
     st.session_state['display_name'] = display_name
 elif 'res' not in st.session_state:
     st.session_state['res'] = None
+    # Отображаем начальную пустую или дефолтную клетку
+    fig_init = go.Figure(
+        layout=go.Layout(showlegend=False, margin=dict(l=0, r=0, t=0, b=0), height=250, paper_bgcolor='rgba(0,0,0,0)',
+                         plot_bgcolor='rgba(0,0,0,0)'))
+    plot_placeholder.plotly_chart(fig_init, use_container_width=True, config={'displayModeBar': False})
 
 res = st.session_state['res']
 display_name = st.session_state.get('display_name', selected_file)
 
 if res:
     with col1:
-        st.markdown("##### 🌐 3D Cancer Cell Membrane & Hub")
-        fig = create_3d_plot(res, slider_val)
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-
         st.markdown(f"""
         <div class="metric-card">
             <b>✅ Profile:</b> <span style="font-family: monospace; color: #2563eb;" title="Файл пациентки">{display_name}</span> | 
