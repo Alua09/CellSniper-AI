@@ -16,9 +16,10 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+    /* Абсолютно убираем верхний отступ, чтобы шапка была видна сразу */
     .block-container {
-        padding-top: 0.3rem !important;
-        padding-bottom: 0.3rem !important;
+        padding-top: 0rem !important;
+        padding-bottom: 0.4rem !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
     }
@@ -38,7 +39,7 @@ st.markdown("""
         font-size: 10px;
         color: #64748b;
         text-align: center;
-        margin-top: 4px;
+        margin-top: 2px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -70,7 +71,7 @@ def parse_annotations(annot_str):
     action = "Targetable" if "level_1" in s.lower() or "level_2" in s.lower() else "Investigational"
 
     if "level_1" in s.lower():
-        oncokb_val = "Level 1 (FDA Approved Drug)"
+        oncokb_val = "Level 1 (FDA-Approved Drug Match)"
     elif "level_3" in s.lower() or "3a" in s.lower():
         oncokb_val = "Level 3A (Standard Care Resistance / Clinical Trial)"
     elif "oncogenic" in s.lower():
@@ -130,7 +131,7 @@ def calculate_hub(file_path):
             okb, hs, act = parse_annotations(annot)
 
             if "Level 1" in okb:
-                max_oncokb = "Level 1 (FDA Approved)"
+                max_oncokb = "Level 1 (FDA-Approved)"
             elif "Level 2" in okb and "Level 1" not in max_oncokb:
                 max_oncokb = "Level 2 (Standard Care)"
 
@@ -173,21 +174,22 @@ def create_3d_plot(result, max_nodes=35):
         top_nodes[0] = hub_gene
     G_sub = G.subgraph(top_nodes)
 
-    pos_3d = nx.spring_layout(G_sub, dim=3, seed=42, k=1.3, iterations=20)
+    pos_3d = nx.spring_layout(G_sub, dim=3, seed=42, k=1.4, iterations=25)
     if pos_3d:
         coords_array = np.array(list(pos_3d.values()))
         max_c = np.max(np.abs(coords_array))
         if max_c > 0:
-            pos_3d = {node: coords * (1.7 / max_c) for node, coords in pos_3d.items()}
+            # Увеличенный масштаб для эффекта всплывания
+            pos_3d = {node: coords * (1.9 / max_c) for node, coords in pos_3d.items()}
 
     u = np.linspace(0, 2 * np.pi, 20)
     v = np.linspace(0, np.pi, 20)
     U, V = np.meshgrid(u, v)
-    r = 2.1 + 0.25 * np.sin(3 * U) * np.cos(4 * V) + 0.2 * np.sin(5 * V)
+    r = 2.3 + 0.25 * np.sin(3 * U) * np.cos(4 * V) + 0.2 * np.sin(5 * V)
     xs, ys, zs = r * np.cos(U) * np.sin(V), r * np.sin(U) * np.sin(V), r * np.cos(V)
 
     cancer_cell_surface = go.Surface(
-        x=xs, y=ys, z=zs, opacity=0.12, showscale=False, hoverinfo='none', colorscale='Burgyl'
+        x=xs, y=ys, z=zs, opacity=0.14, showscale=False, hoverinfo='none', colorscale='Burgyl'
     )
 
     edge_x, edge_y, edge_z = [], [], []
@@ -199,7 +201,7 @@ def create_3d_plot(result, max_nodes=35):
             edge_y.extend([y0, y1, None])
             edge_z.extend([z0, z1, None])
 
-    edge_trace = go.Scatter3d(x=edge_x, y=edge_y, z=edge_z, mode='lines', line=dict(color='#0284c7', width=1),
+    edge_trace = go.Scatter3d(x=edge_x, y=edge_y, z=edge_z, mode='lines', line=dict(color='#0284c7', width=1.2),
                               hoverinfo='none')
 
     node_x, node_y, node_z, node_text, node_color, node_size, node_labels = [], [], [], [], [], [], []
@@ -222,7 +224,7 @@ def create_3d_plot(result, max_nodes=35):
                 node_y.append(y);
                 node_z.append(z)
                 node_color.append('#2563eb');
-                node_size.append(6)
+                node_size.append(7)
                 node_labels.append(node if node in top_labels else '')
 
     node_trace = go.Scatter3d(
@@ -231,15 +233,15 @@ def create_3d_plot(result, max_nodes=35):
         marker=dict(size=node_size, color=node_color, opacity=0.9), hoverinfo='text', hovertext=node_text
     )
 
-    # Пульсирующий хаб с внешним контуром для эффекта пульсации
+    # Пульсирующий ген-хаб (аккуратный красный кружок с подсветкой)
     hub_glow_trace = go.Scatter3d(
         x=hub_x, y=hub_y, z=hub_z, mode='markers',
-        marker=dict(size=26, color='#ef4444', opacity=0.4, symbol='circle'), hoverinfo='none'
+        marker=dict(size=28, color='#ef4444', opacity=0.45, symbol='circle'), hoverinfo='none'
     )
     hub_trace = go.Scatter3d(
-        x=hub_x, y=hub_y, z=hub_z, mode='markers+text', text=[f"★ {hub_gene} (PULSING HUB)"],
+        x=hub_x, y=hub_y, z=hub_z, mode='markers+text', text=[f"★ {hub_gene} (HUB)"],
         textposition='top center', textfont=dict(size=10, color='#dc2626', family='Arial Black'),
-        marker=dict(size=14, color='#dc2626', opacity=0.98, symbol='circle', line=dict(color='#ffffff', width=2.5)),
+        marker=dict(size=15, color='#dc2626', opacity=0.98, symbol='circle', line=dict(color='#ffffff', width=2.5)),
         hoverinfo='text'
     )
 
@@ -276,30 +278,31 @@ Authors: Alua Tolegenova & Danaiya Anitova
 =================================================="""
 
 
-# Шапка приложения (полностью видимая сверху)
+# Шапка приложения (размещена в самом верху без отступов)
 header_col1, header_col2 = st.columns([0.06, 0.94])
 with header_col1:
     if os.path.exists("images.jpeg"):
-        st.image("images.jpeg", width=42)
+        st.image("images.jpeg", width=40)
 with header_col2:
     st.markdown("""
-    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 3px 8px;">
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 2px 8px;">
         <h3 style="margin: 0; color: #0f172a; font-size: 15px;">🧬 CellSniper AI <span style="font-size: 11px; color: #2563eb;">[Team: The Snipers | KIMEP AI Challenge 2026]</span></h3>
         <p style="margin: 1px 0 0 0; color: #475569; font-style: italic; font-size: 10px;">Precision Clinical Decision Support System via 3D Network Topology & OncoKB Mapping.</p>
     </div>
     """, unsafe_allow_html=True)
 
-# Боковая панель
+# Боковая панель управления
 st.sidebar.markdown("### 🎛️ Control Panel")
-selected_file = st.sidebar.selectbox("Select Patient Profile", current_tsv_list, help="Choose patient sample dataset")
+selected_file = st.sidebar.selectbox("Select Patient Profile", current_tsv_list,
+                                     help="Choose pre-loaded TCGA breast cancer patient sample")
 slider_val = st.sidebar.slider("3D Network Density", min_value=10, max_value=75, value=35, step=5,
-                               help="Controls number of nodes displayed in PPI network")
+                               help="Controls the number of interacting nodes displayed in the 3D PPI network")
 
 run_btn = st.sidebar.button("🚀 Run Topology Analysis", type="primary")
 
 st.sidebar.markdown("---")
 uploaded_file = st.sidebar.file_uploader("📂 Upload New Patient TSV", type=[".tsv"],
-                                         help="Upload custom patient mutation TSV file")
+                                         help="Upload custom patient somatic mutation profile in TSV format")
 
 file_to_load = None
 display_name = selected_file
@@ -334,9 +337,9 @@ if res:
         <div class="metric-card">
             <b>✅ Profile:</b> <span style="font-family: monospace; color: #2563eb;">{display_name}</span> | 
             <b>📊 Mutations:</b> <span style="font-family: monospace;">{res['total_mutations']}</span> | 
-            <b>🎯 Hub:</b> <span style="font-family: monospace; background: #fee2e2; color: #991b1b; padding: 1px 3px; border-radius: 3px; font-weight: bold;" title="Core network bottleneck gene">{res['hub']}</span><br>
-            <b>⚡ Risk:</b> <span style="font-family: monospace; color: #7c2d12; font-weight: bold;" title="Prognostic phenotype stratification">{res['risk_score']}</span> | 
-            <b>💊 OncoKB:</b> <span style="font-family: monospace; color: #059669; font-weight: bold;" title="Level 1: FDA-Approved | Level 2: Standard Care | Level 3: Clinical Trial / Resistance">{res['max_oncokb']}</span>
+            <b>🎯 Hub:</b> <span style="font-family: monospace; background: #fee2e2; color: #991b1b; padding: 1px 3px; border-radius: 3px; font-weight: bold;" title="Core network bottleneck gene driving tumor proliferation">{res['hub']}</span><br>
+            <b>⚡ Risk:</b> <span style="font-family: monospace; color: #7c2d12; font-weight: bold;" title="Prognostic phenotype stratification based on network centrality">{res['risk_score']}</span> | 
+            <b>💊 OncoKB:</b> <span style="font-family: monospace; color: #059669; font-weight: bold;" title="Level 1: FDA-Approved Drug | Level 2: Standard Care Evidence | Level 3: Clinical Trial / Resistance">{res['max_oncokb']}</span>
         </div>
         """, unsafe_allow_html=True)
 
@@ -345,7 +348,8 @@ if res:
             label="📥 Download Clinical Report",
             data=report_txt,
             file_name=f"Report_{display_name.replace('.tsv', '')}.txt",
-            mime="text/plain"
+            mime="text/plain",
+            help="Download complete clinical summary and mutation matrix report"
         )
 
     with col2:
@@ -387,12 +391,12 @@ if res:
             st.markdown("##### Mutation Matrix (Numbered from 1)")
             st.dataframe(res['df'], use_container_width=True, height=170)
             st.markdown(
-                "<span style='font-size: 10px; color: #64748b;' title='Annotated via OncoKB'>*Validated against OncoKB database.*</span>",
+                "<span style='font-size: 10px; color: #64748b;' title='Validated against OncoKB database'>*Annotated via OncoKB database.*</span>",
                 unsafe_allow_html=True)
 else:
     st.info("👆 Select a patient profile in the sidebar and click **'Run Topology Analysis'**.")
 
-# Благодарность сайту cBioPortal в футере
+# Официальная благодарность сайту cBioPortal в футере
 st.markdown("""
 <div class="footer-note">
     🙏 Special thanks to <a href="https://www.cbioportal.org/study/summary?id=brca_tcga_pan_can_atlas_2018" target="_blank">cBioPortal (TCGA PanCanAtlas 2018)</a> for providing the clinical genomic datasets.
