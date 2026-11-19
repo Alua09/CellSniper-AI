@@ -16,23 +16,24 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+    /* Убираем обрезку сверху и настраиваем компактность */
     .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
-        padding-left: 1.5rem !important;
-        padding-right: 1.5rem !important;
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
     }
     h2, h3, h5 {
-        margin-bottom: 0.2rem !important;
+        margin-bottom: 0.1rem !important;
         margin-top: 0rem !important;
     }
     .metric-card { 
         background: #ffffff; 
         border: 1px solid #e2e8f0; 
-        border-radius: 10px; 
-        padding: 10px; 
+        border-radius: 8px; 
+        padding: 8px; 
         box-shadow: 0 2px 4px rgba(0,0,0,0.03); 
-        font-size: 13px;
+        font-size: 12px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -112,7 +113,6 @@ def calculate_hub(file_path):
         hub_gene = max(betweenness, key=betweenness.get) if betweenness else genes[0]
         hub_score = betweenness.get(hub_gene, 0.05)
 
-        # Нововведение: расчет клинического риска на основе междуузловой центральности хаба
         risk_score = "High Risk (Aggressive Phenotype)" if hub_score > 0.15 else "Low Risk (Indolent Phenotype)"
 
         structured_rows = []
@@ -138,6 +138,8 @@ def calculate_hub(file_path):
             })
 
         struct_df = pd.DataFrame(structured_rows)
+        # Нумерация с единицы
+        struct_df.index = range(1, len(struct_df) + 1)
 
         return {
             "graph": G,
@@ -174,14 +176,14 @@ def create_3d_plot(result, max_nodes=35):
         if max_c > 0:
             pos_3d = {node: coords * (1.7 / max_c) for node, coords in pos_3d.items()}
 
-    u = np.linspace(0, 2 * np.pi, 25)
-    v = np.linspace(0, np.pi, 25)
+    u = np.linspace(0, 2 * np.pi, 20)
+    v = np.linspace(0, np.pi, 20)
     U, V = np.meshgrid(u, v)
     r = 2.1 + 0.25 * np.sin(3 * U) * np.cos(4 * V) + 0.2 * np.sin(5 * V)
     xs, ys, zs = r * np.cos(U) * np.sin(V), r * np.sin(U) * np.sin(V), r * np.cos(V)
 
     cancer_cell_surface = go.Surface(
-        x=xs, y=ys, z=zs, opacity=0.15, showscale=False, hoverinfo='none', colorscale='Burgyl'
+        x=xs, y=ys, z=zs, opacity=0.12, showscale=False, hoverinfo='none', colorscale='Burgyl'
     )
 
     edge_x, edge_y, edge_z = [], [], []
@@ -193,12 +195,12 @@ def create_3d_plot(result, max_nodes=35):
             edge_y.extend([y0, y1, None])
             edge_z.extend([z0, z1, None])
 
-    edge_trace = go.Scatter3d(x=edge_x, y=edge_y, z=edge_z, mode='lines', line=dict(color='#0284c7', width=1.5),
+    edge_trace = go.Scatter3d(x=edge_x, y=edge_y, z=edge_z, mode='lines', line=dict(color='#0284c7', width=1),
                               hoverinfo='none')
 
     node_x, node_y, node_z, node_text, node_color, node_size, node_labels = [], [], [], [], [], [], []
     sorted_nodes = sorted(G_sub.nodes(), key=lambda n: centrality.get(n, 0), reverse=True)
-    top_labels = set(sorted_nodes[:12])
+    top_labels = set(sorted_nodes[:10])
     top_labels.add(hub_gene)
 
     hub_x, hub_y, hub_z = [], [], []
@@ -216,24 +218,25 @@ def create_3d_plot(result, max_nodes=35):
                 node_y.append(y);
                 node_z.append(z)
                 node_color.append('#2563eb');
-                node_size.append(7)
+                node_size.append(6)
                 node_labels.append(node if node in top_labels else '')
 
     node_trace = go.Scatter3d(
         x=node_x, y=node_y, z=node_z, mode='markers+text', text=node_labels,
-        textposition='top center', textfont=dict(size=10, color='#0f172a', family='Arial Black'),
-        marker=dict(size=node_size, color=node_color, opacity=0.95), hoverinfo='text', hovertext=node_text
+        textposition='top center', textfont=dict(size=9, color='#0f172a', family='Arial Black'),
+        marker=dict(size=node_size, color=node_color, opacity=0.9), hoverinfo='text', hovertext=node_text
     )
 
-    # Пульсирующий ген-хаб (анимация через кадры Plotly)
+    # Аккуратный пульсирующий красный кружок для ген-хаба
     hub_trace = go.Scatter3d(
         x=hub_x, y=hub_y, z=hub_z, mode='markers+text', text=[f"★ {hub_gene} (HUB)"],
-        textposition='top center', textfont=dict(size=11, color='#dc2626', family='Arial Black'),
-        marker=dict(size=24, color='#dc2626', opacity=0.95, symbol='diamond'), hoverinfo='text'
+        textposition='top center', textfont=dict(size=10, color='#dc2626', family='Arial Black'),
+        marker=dict(size=16, color='#dc2626', opacity=0.95, symbol='circle', line=dict(color='#ffffff', width=2)),
+        hoverinfo='text'
     )
 
     fig = go.Figure(data=[cancer_cell_surface, edge_trace, node_trace, hub_trace], layout=go.Layout(
-        showlegend=False, margin=dict(l=0, r=0, t=5, b=0), height=300,
+        showlegend=False, margin=dict(l=0, r=0, t=0, b=0), height=260,
         scene=dict(xaxis=dict(showbackground=False, visible=False),
                    yaxis=dict(showbackground=False, visible=False),
                    zaxis=dict(showbackground=False, visible=False),
@@ -257,7 +260,7 @@ Prognostic Risk Stratification: {res['risk_score']}
 Max OncoKB Actionability Tier: {res['max_oncokb']}
 --------------------------------------------------
 MUTATION MATRIX & ACTIONABILITY SUMMARY:
-{res['df'].to_string(index=False)}
+{res['df'].to_string()}
 --------------------------------------------------
 Generated by CellSniper AI | Team: The Snipers (KIMEP AI Challenge 2026)
 Authors: Alua Tolegenova & Danaiya Anitova
@@ -265,25 +268,27 @@ Authors: Alua Tolegenova & Danaiya Anitova
 
 
 # Шапка приложения
-header_col1, header_col2 = st.columns([0.08, 0.92])
+header_col1, header_col2 = st.columns([0.07, 0.93])
 with header_col1:
     if os.path.exists("images.jpeg"):
-        st.image("images.jpeg", width=50)
+        st.image("images.jpeg", width=45)
 with header_col2:
     st.markdown("""
-    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 6px 10px;">
-        <h3 style="margin: 0; color: #0f172a; font-size: 17px;">🧬 CellSniper AI <span style="font-size: 11px; color: #2563eb;">[Team: The Snipers | KIMEP AI Challenge 2026]</span></h3>
-        <p style="margin: 2px 0 0 0; color: #475569; font-style: italic; font-size: 11px;">Precision Clinical Decision Support System via 3D Network Topology & OncoKB Mapping.</p>
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px 8px;">
+        <h3 style="margin: 0; color: #0f172a; font-size: 16px;">🧬 CellSniper AI <span style="font-size: 11px; color: #2563eb;">[Team: The Snipers | KIMEP AI Challenge 2026]</span></h3>
+        <p style="margin: 1px 0 0 0; color: #475569; font-style: italic; font-size: 10px;">Precision Clinical Decision Support System via 3D Network Topology & OncoKB Mapping.</p>
     </div>
     """, unsafe_allow_html=True)
 
-# Боковая панель управления с кнопкой запуска
+# Боковая панель: Сначала выбор, ползунок, КНОПКА RUN, а затем загрузка файла
 st.sidebar.markdown("### 🎛️ Control Panel")
 selected_file = st.sidebar.selectbox("Select Patient Profile", current_tsv_list)
 slider_val = st.sidebar.slider("3D Network Density", min_value=10, max_value=75, value=35, step=5)
-uploaded_file = st.sidebar.file_uploader("📂 Upload New Patient TSV", type=[".tsv"])
 
 run_btn = st.sidebar.button("🚀 Run Topology Analysis", type="primary")
+
+st.sidebar.markdown("---")
+uploaded_file = st.sidebar.file_uploader("📂 Upload New Patient TSV", type=[".tsv"])
 
 file_to_load = None
 display_name = selected_file
@@ -316,9 +321,9 @@ if res:
 
         st.markdown(f"""
         <div class="metric-card">
-            <b>✅ Active Profile:</b> <span style="font-family: monospace; color: #2563eb;">{display_name}</span> | 
-            <b>🎯 Hub:</b> <span style="font-family: monospace; background: #fee2e2; color: #991b1b; padding: 1px 4px; border-radius: 3px; font-weight: bold;">{res['hub']}</span><br>
-            <b>⚡ Risk Score:</b> <span style="font-family: monospace; color: #7c2d12; font-weight: bold;">{res['risk_score']}</span> | 
+            <b>✅ Profile:</b> <span style="font-family: monospace; color: #2563eb;">{display_name}</span> | 
+            <b>🎯 Hub:</b> <span style="font-family: monospace; background: #fee2e2; color: #991b1b; padding: 1px 3px; border-radius: 3px; font-weight: bold;">{res['hub']}</span><br>
+            <b>⚡ Risk:</b> <span style="font-family: monospace; color: #7c2d12; font-weight: bold;">{res['risk_score']}</span> | 
             <b>💊 OncoKB:</b> <span style="font-family: monospace; color: #059669; font-weight: bold;">{res['max_oncokb']}</span>
         </div>
         """, unsafe_allow_html=True)
@@ -335,16 +340,17 @@ if res:
         tab1, tab2 = st.tabs(["🤖 AI Tumor Board", "📋 Mutation Matrix"])
 
         with tab1:
-            st.markdown("##### Tumor Board Consultation (Interactive AI)")
+            st.markdown("##### Tumor Board Consultation")
             preset_question = st.selectbox("Select Preset Clinical Query", [
                 "What is the biological role of this gene hub?",
                 "Which FDA-approved inhibitors match this biomarker?",
                 "Is this mutation linked to drug resistance?",
                 "Are there active clinical trials for this mutation?",
                 "What are the recommended combination therapy options?"
-            ])
-            custom_query = st.text_input("Or type your custom clinical question:")
-            ask_btn = st.button("💬 Generate AI Consultation", type="primary")
+            ], label_visibility="collapsed")
+            custom_query = st.text_input("Or type your custom question:",
+                                         placeholder="Ask anything about the patient...")
+            ask_btn = st.button("💬 Ask AI Board", type="primary")
 
             if ask_btn:
                 query_to_use = custom_query if custom_query else preset_question
@@ -352,22 +358,22 @@ if res:
                 q_lower = query_to_use.lower()
 
                 if "biological role" in q_lower:
-                    ai_response = f"🧬 **Biological Role ({hub_name}):** Core network bottleneck gene driving unchecked tumor propagation and signal amplification."
+                    ai_response = f"🧬 **Biological Role ({hub_name}):** Core network bottleneck gene driving tumor cell propagation."
                 elif "inhibitors" in q_lower or "drugs" in q_lower:
-                    ai_response = f"💊 **Targeted Therapy ({hub_name}):** OncoKB indicates actionability for precision kinase inhibitors targeting {hub_name}."
+                    ai_response = f"💊 **Targeted Therapy ({hub_name}):** OncoKB indicates actionability for precision kinase inhibitors."
                 elif "resistance" in q_lower:
-                    ai_response = f"⚠️ **Drug Resistance ({hub_name}):** Alterations correlate with acquired resistance; combination therapy with immune checkpoint inhibitors is suggested."
+                    ai_response = f"⚠️ **Drug Resistance ({hub_name}):** Mutations correlate with acquired resistance; combination therapy advised."
                 elif "clinical trials" in q_lower:
-                    ai_response = f"🔬 **Clinical Trials ({hub_name}):** Phase II/III trials are actively evaluating synthetic lethality approaches for this specific mutation."
+                    ai_response = f"🔬 **Clinical Trials ({hub_name}):** Phase II/III trials evaluate synthetic lethality approaches."
                 else:
-                    ai_response = f"🎯 **Custom Query Analysis ({hub_name}):** Network topology evaluation confirms high vulnerability to targeted disruption at node {hub_name}."
+                    ai_response = f"🎯 **Query Analysis ({hub_name}):** Network disruption at node {hub_name} collapses tumor survival grid."
 
                 st.success(ai_response)
 
         with tab2:
-            st.markdown("##### Mutation Matrix")
-            st.dataframe(res['df'], use_container_width=True, height=210)
-            st.markdown("<span style='font-size: 11px; color: #64748b;'>*Validated against OncoKB database.*</span>",
+            st.markdown("##### Mutation Matrix (Numbered from 1)")
+            st.dataframe(res['df'], use_container_width=True, height=185)
+            st.markdown("<span style='font-size: 10px; color: #64748b;'>*Validated against OncoKB database.*</span>",
                         unsafe_allow_html=True)
 else:
-    st.info("👆 Please select a patient profile from the sidebar and click **'Run Topology Analysis'**.")
+    st.info("👆 Select a patient profile in the sidebar and click **'Run Topology Analysis'**.")
