@@ -16,9 +16,9 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    /* Безопасный отступ сверху, чтобы шапка никогда не перекрывалась панелью Streamlit */
+    /* Идеальный отступ сверху, чтобы шапка была полностью видна и не пряталась */
     .block-container {
-        padding-top: 1.8rem !important;
+        padding-top: 1.5rem !important;
         padding-bottom: 0.4rem !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
@@ -206,7 +206,7 @@ def create_animated_plot(result, max_nodes=35, stage=3):
 
     data_traces = [cancer_cell_surface]
 
-    # Этап 2 и 3: Добавляем связи (edges)
+    # Этап 2 и 3: Добавляем связи (edges) и узлы (nodes)
     if stage >= 2:
         edge_x, edge_y, edge_z = [], [], []
         for edge in G_sub.edges():
@@ -220,7 +220,6 @@ def create_animated_plot(result, max_nodes=35, stage=3):
                                   hoverinfo='none')
         data_traces.append(edge_trace)
 
-    # Узлы (ноды)
     node_x, node_y, node_z, node_text, node_color, node_size, node_labels = [], [], [], [], [], [], []
     sorted_nodes = sorted(G_sub.nodes(), key=lambda n: centrality.get(n, 0), reverse=True)
     top_labels = set(sorted_nodes[:10])
@@ -244,12 +243,13 @@ def create_animated_plot(result, max_nodes=35, stage=3):
                 node_size.append(7)
                 node_labels.append(node if node in top_labels else '')
 
-    node_trace = go.Scatter3d(
-        x=node_x, y=node_y, z=node_z, mode='markers+text', text=node_labels,
-        textposition='top center', textfont=dict(size=9, color='#0f172a', family='Arial Black'),
-        marker=dict(size=node_size, color=node_color, opacity=0.9), hoverinfo='text', hovertext=node_text
-    )
-    data_traces.append(node_trace)
+    if stage >= 2:
+        node_trace = go.Scatter3d(
+            x=node_x, y=node_y, z=node_z, mode='markers+text', text=node_labels,
+            textposition='top center', textfont=dict(size=9, color='#0f172a', family='Arial Black'),
+            marker=dict(size=node_size, color=node_color, opacity=0.9), hoverinfo='text', hovertext=node_text
+        )
+        data_traces.append(node_trace)
 
     # Этап 3: Финальный поиск и подсвечивание ген-хаба
     if stage >= 3:
@@ -298,16 +298,21 @@ Authors: Alua Tolegenova & Danaiya Anitova
 =================================================="""
 
 
-# Абсолютно видимая шапка проекта
-header_col1, header_col2 = st.columns([0.07, 0.93])
-with header_col1:
+# Идеально видимая и красивая шапка с фиксированным контейнером для логотипа
+st.markdown("""
+<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+    <div style="flex-shrink: 0; width: 45px; height: 45px; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f1f5f9;">
+""")
+
+col_logo, col_title = st.columns([0.06, 0.94])
+with col_logo:
     if os.path.exists("images.jpeg"):
         st.image("images.jpeg", width=45)
-with header_col2:
-    st.markdown(
-        "### 🧬 CellSniper AI <span style='font-size: 12px; color: #2563eb;'>[Team: The Snipers | KIMEP AI Challenge 2026]</span>",
-        unsafe_allow_html=True)
-    st.caption("Precision Clinical Decision Support System via 3D Network Topology & OncoKB Mapping.")
+with col_title:
+    st.markdown("""
+        <h2 style="margin: 0; color: #0f172a; font-size: 20px; font-weight: 800;">🧬 CellSniper AI <span style="font-size: 12px; color: #2563eb; background: #eff6ff; padding: 2px 8px; border-radius: 6px;">[Team: The Snipers | KIMEP AI Challenge 2026]</span></h2>
+        <p style="margin: 2px 0 0 0; color: #475569; font-style: italic; font-size: 11px;">Precision Clinical Decision Support System via 3D Network Topology & OncoKB Mapping.</p>
+    """, unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -349,31 +354,32 @@ elif selected_file and selected_file != "No_files_found.tsv":
 # Основная рабочая область
 col1, col2 = st.columns([1, 1], gap="medium")
 
-# Контейнер для графика в реальном времени
+# Контейнер для графика
 plot_placeholder = col1.empty()
 
 if run_btn and file_to_load:
     res, status = calculate_hub(file_to_load)
 
-    # ЭТАП 1: Появление 3D-мембраны клетки и точек мутаций
-    fig_stage1 = create_animated_plot(res, slider_val, stage=1)
-    plot_placeholder.plotly_chart(fig_stage1, use_container_width=True, config={'displayModeBar': False})
-    time.sleep(0.4)
+    # ЖИВАЯ АНИМАЦИЯ ПОСТРОЕНИЯ В РЕАЛЬНОМ ВРЕМЕНИ ДЛЯ ЖЮРИ:
+    with st.spinner("🌐 Шаг 1/3: Рендеринг 3D-мембраны раковой клетки..."):
+        fig_stage1 = create_animated_plot(res, slider_val, stage=1)
+        plot_placeholder.plotly_chart(fig_stage1, use_container_width=True, config={'displayModeBar': False})
+        time.sleep(0.6)
 
-    # ЭТАП 2: В реальном времени прорисовываются связи (PPI Network)
-    fig_stage2 = create_animated_plot(res, slider_val, stage=2)
-    plot_placeholder.plotly_chart(fig_stage2, use_container_width=True, config={'displayModeBar': False})
-    time.sleep(0.4)
+    with st.spinner("🔗 Шаг 2/3: Построение белок-белковых связей (PPI Network)..."):
+        fig_stage2 = create_animated_plot(res, slider_val, stage=2)
+        plot_placeholder.plotly_chart(fig_stage2, use_container_width=True, config={'displayModeBar': False})
+        time.sleep(0.6)
 
-    # ЭТАП 3: Нахождение и яркая вспышка главного ген-хаба
-    fig_stage3 = create_animated_plot(res, slider_val, stage=3)
-    plot_placeholder.plotly_chart(fig_stage3, use_container_width=True, config={'displayModeBar': False})
+    with st.spinner("🎯 Шаг 3/3: Вычисление центральности и активация ген-хаба..."):
+        fig_stage3 = create_animated_plot(res, slider_val, stage=3)
+        plot_placeholder.plotly_chart(fig_stage3, use_container_width=True, config={'displayModeBar': False})
+        time.sleep(0.4)
 
     st.session_state['res'] = res
     st.session_state['display_name'] = display_name
 elif 'res' not in st.session_state:
     st.session_state['res'] = None
-    # Отображаем начальную пустую или дефолтную клетку
     fig_init = go.Figure(
         layout=go.Layout(showlegend=False, margin=dict(l=0, r=0, t=0, b=0), height=250, paper_bgcolor='rgba(0,0,0,0)',
                          plot_bgcolor='rgba(0,0,0,0)'))
