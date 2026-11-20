@@ -8,7 +8,7 @@ import streamlit as st
 
 # Настройка страницы Streamlit
 st.set_page_config(
-    page_title="CellSniper AI | Team The Snipers",
+    page_title="CellSniper AI ,
     page_icon="🧬",
     layout="wide"
 )
@@ -16,7 +16,7 @@ st.set_page_config(
 st.markdown("""
 <style>
     .block-container {
-        padding-top: 2.5rem !important;
+        padding-top: 1.5rem !important;
         padding-bottom: 0.4rem !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
@@ -24,6 +24,13 @@ st.markdown("""
     h2, h3, h5 {
         margin-bottom: 0.1rem !important;
         margin-top: 0rem !important;
+    }
+    /* Стили для центрирования и опускания логотипа в шапке */
+    .logo-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 6px;
     }
     .metric-card { 
         background: #ffffff; 
@@ -287,11 +294,13 @@ Authors: Alua Tolegenova & Danaiya Anitova
 =================================================="""
 
 
-# Абсолютно видимая шапка проекта
+# Абсолютно видимая и выровненная шапка проекта
 header_col1, header_col2 = st.columns([0.08, 0.92])
 with header_col1:
     if os.path.exists("images.jpeg"):
-        st.image("images.jpeg", width=55)
+        st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+        st.image("images.jpeg", width=50)
+        st.markdown('</div>', unsafe_allow_html=True)
 with header_col2:
     st.markdown("""
     ### 🧬 CellSniper AI <span style="font-size: 11px; color: #2563eb; background: #eff6ff; padding: 2px 8px; border-radius: 6px;">[Team: The Snipers]</span>
