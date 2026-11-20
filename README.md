@@ -39,7 +39,8 @@ The platform is validated on de-identified somatic mutation profiles of **30 rea
 1. **Clone the repository:**
 
 ```bash
-   git clone \\\[https://github.com/YOUR\\\_USERNAME/CellSniper-AI.git](https://github.com/YOUR\\\_USERNAME/CellSniper-AI.git)
+   git clone \\\\\\\[https://github.com/Alua09/CellSniper-AI.git](https://github.com/Alua09/CellSniper-AI.git)
    cd CellSniper-AI
+
 
 
