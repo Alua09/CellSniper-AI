@@ -1,6 +1,5 @@
 import os
 import glob
-import time
 import pandas as pd
 import networkx as nx
 import plotly.graph_objects as go
@@ -172,7 +171,7 @@ def calculate_hub(file_path):
         return None, str(e)
 
 
-def create_animated_plot(result, max_nodes=35):
+def create_3d_plot(result, max_nodes=35):
     if not result:
         return go.Figure()
 
@@ -255,56 +254,14 @@ def create_animated_plot(result, max_nodes=35):
         hoverinfo='text'
     )
 
-    frames = [
-        go.Frame(data=[cancer_cell_surface,
-                       go.Scatter3d(x=[], y=[], z=[], mode='markers'),
-                       go.Scatter3d(x=[], y=[], z=[], mode='lines'),
-                       go.Scatter3d(x=[], y=[], z=[], mode='markers'),
-                       go.Scatter3d(x=[], y=[], z=[], mode='markers')], name='frame1'),
-        go.Frame(data=[cancer_cell_surface,
-                       node_trace,
-                       go.Scatter3d(x=[], y=[], z=[], mode='lines'),
-                       go.Scatter3d(x=[], y=[], z=[], mode='markers'),
-                       go.Scatter3d(x=[], y=[], z=[], mode='markers')], name='frame2'),
-        go.Frame(data=[cancer_cell_surface,
-                       node_trace,
-                       edge_trace,
-                       go.Scatter3d(x=[], y=[], z=[], mode='markers'),
-                       go.Scatter3d(x=[], y=[], z=[], mode='markers')], name='frame3'),
-        go.Frame(data=[cancer_cell_surface,
-                       node_trace,
-                       edge_trace,
-                       hub_glow_trace,
-                       hub_trace], name='frame4')
-    ]
-
-    fig = go.Figure(
-        data=[cancer_cell_surface,
-              go.Scatter3d(x=[], y=[], z=[], mode='markers'),
-              go.Scatter3d(x=[], y=[], z=[], mode='lines'),
-              go.Scatter3d(x=[], y=[], z=[], mode='markers'),
-              go.Scatter3d(x=[], y=[], z=[], mode='markers')],
-        frames=frames,
-        layout=go.Layout(
-            showlegend=False, margin=dict(l=0, r=0, t=0, b=0), height=250,
-            scene=dict(xaxis=dict(showbackground=False, visible=False),
-                       yaxis=dict(showbackground=False, visible=False),
-                       zaxis=dict(showbackground=False, visible=False),
-                       bgcolor='rgba(0,0,0,0)'),
-            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-            updatemenus=[dict(
-                type="buttons",
-                showactive=False,
-                buttons=[dict(
-                    label="Play Animation",
-                    method="animate",
-                    args=[None, {"frame": {"duration": 600, "redraw": "true"}, "fromcurrent": True,
-                                 "transition": {"duration": 400}}]
-                )],
-                x=0.05, y=0.15, visible=False
-            )]
-        )
-    )
+    fig = go.Figure(data=[cancer_cell_surface, edge_trace, node_trace, hub_glow_trace, hub_trace], layout=go.Layout(
+        showlegend=False, margin=dict(l=0, r=0, t=0, b=0), height=250,
+        scene=dict(xaxis=dict(showbackground=False, visible=False),
+                   yaxis=dict(showbackground=False, visible=False),
+                   zaxis=dict(showbackground=False, visible=False),
+                   bgcolor='rgba(0,0,0,0)'),
+        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)'
+    ))
     return fig
 
 
@@ -330,6 +287,7 @@ Authors: Alua Tolegenova & Danaiya Anitova
 =================================================="""
 
 
+# Надежная и чистая шапка проекта через нативные колонки Streamlit
 header_col1, header_col2 = st.columns([0.08, 0.92])
 with header_col1:
     if os.path.exists("images.jpeg"):
@@ -342,6 +300,7 @@ with header_col2:
 
 st.markdown("---")
 
+# Боковая панель управления
 st.sidebar.markdown("### 🎛️ Control Panel")
 selected_file = st.sidebar.selectbox(
     "Select Patient Profile",
@@ -376,37 +335,25 @@ if uploaded_file is not None:
 elif selected_file and selected_file != "No_files_found.tsv":
     file_to_load = os.path.join(BASE_DIR, selected_file)
 
+# Основная рабочая область
 col1, col2 = st.columns([1, 1], gap="medium")
-plot_placeholder = col1.empty()
 
 if run_btn and file_to_load:
     res, status = calculate_hub(file_to_load)
-    fig_animated = create_animated_plot(res, slider_val)
-
-    with st.spinner("🌐 Построение 3D-модели раковой клетки и анализ связей..."):
-        time.sleep(0.3)
-
-    plot_placeholder.plotly_chart(
-        fig_animated,
-        use_container_width=True,
-        config={'displayModeBar': False},
-        theme=None
-    )
-
     st.session_state['res'] = res
     st.session_state['display_name'] = display_name
 elif 'res' not in st.session_state:
     st.session_state['res'] = None
-    fig_init = go.Figure(
-        layout=go.Layout(showlegend=False, margin=dict(l=0, r=0, t=0, b=0), height=250, paper_bgcolor='rgba(0,0,0,0)',
-                         plot_bgcolor='rgba(0,0,0,0)'))
-    plot_placeholder.plotly_chart(fig_init, use_container_width=True, config={'displayModeBar': False})
 
 res = st.session_state['res']
 display_name = st.session_state.get('display_name', selected_file)
 
 if res:
     with col1:
+        st.markdown("##### 🌐 3D Cancer Cell Membrane & Hub")
+        fig = create_3d_plot(res, slider_val)
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+
         st.markdown(f"""
         <div class="metric-card">
             <b>✅ Profile:</b> <span style="font-family: monospace; color: #2563eb;" title="Файл пациентки">{display_name}</span> | 
