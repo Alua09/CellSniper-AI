@@ -1,12 +1,12 @@
-# 🧬 CellSniper AI: Precision Clinical 
+# 🧬 CellSniper AI: Precision Clinical
 
 # Decision Support System
 
-\---
+
 
 **CellSniper AI** is an advanced clinical decision support system designed to help doctors and researchers rapidly analyze tumor cell mutations, identify critical structural vulnerability hubs, and select targeted therapies while preserving healthy tissues.
 
-\---
+
 
 ## 🚀 Key Features
 
@@ -16,13 +16,13 @@
 * **AI Tumor Board:** Simulated multi-disciplinary expert consultation module providing instant insights on biological roles, inhibitor matching, and drug resistance markers.
 * **Clinical Report Export:** Generates downloadable professional summary reports for clinicians and researchers.
 
-\---
+
 
 ## 📊 Dataset \& Validation
 
 The platform is validated on de-identified somatic mutation profiles of **30 real breast invasive carcinoma patients** adapted from cBioPortal (**TCGA PanCancer Atlas 2018**).
 
-\---
+
 
 ## 🛠️ Technology Stack
 
@@ -32,13 +32,14 @@ The platform is validated on de-identified somatic mutation profiles of **30 rea
 * **Data Processing:** Pandas, NumPy
 * **Clinical Knowledge Base:** OncoKB \& TCGA PanCancer Atlas
 
-\---
+
 
 ## ⚙️ Local Installation \& Running
 
 1. **Clone the repository:**
 
 ```bash
-   git clone \[https://github.com/YOUR\_USERNAME/CellSniper-AI.git](https://github.com/YOUR\_USERNAME/CellSniper-AI.git)
+   git clone \\\[https://github.com/YOUR\\\_USERNAME/CellSniper-AI.git](https://github.com/YOUR\\\_USERNAME/CellSniper-AI.git)
    cd CellSniper-AI
+
 
