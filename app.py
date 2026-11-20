@@ -8,7 +8,7 @@ import streamlit as st
 
 # Настройка страницы Streamlit
 st.set_page_config(
-    page_title="CellSniper AI ,
+    page_title="CellSniper AI" ,
     page_icon="🧬",
     layout="wide"
 )
