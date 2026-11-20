@@ -8,7 +8,7 @@ import streamlit as st
 
 # Настройка страницы Streamlit
 st.set_page_config(
-    page_title="CellSniper AI" ,
+    page_title="CellSniper AI | Team The Snipers",
     page_icon="🧬",
     layout="wide"
 )
@@ -25,12 +25,12 @@ st.markdown("""
         margin-bottom: 0.1rem !important;
         margin-top: 0rem !important;
     }
-    /* Стили для центрирования и опускания логотипа в шапке */
+    /* Исправленный контейнер для логотипа без обрезки */
     .logo-container {
         display: flex;
         align-items: center;
-        justify-content: center;
-        margin-top: 6px;
+        justify-content: flex-start;
+        padding-top: 4px;
     }
     .metric-card { 
         background: #ffffff; 
@@ -295,11 +295,11 @@ Authors: Alua Tolegenova & Danaiya Anitova
 
 
 # Абсолютно видимая и выровненная шапка проекта
-header_col1, header_col2 = st.columns([0.08, 0.92])
+header_col1, header_col2 = st.columns([0.06, 0.94])
 with header_col1:
     if os.path.exists("images.jpeg"):
         st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-        st.image("images.jpeg", width=50)
+        st.image("images.jpeg", width=42)
         st.markdown('</div>', unsafe_allow_html=True)
 with header_col2:
     st.markdown("""
