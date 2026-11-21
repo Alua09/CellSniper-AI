@@ -33,10 +33,10 @@ st.markdown("""
         padding-top: 2px;
     }
     .logo-container img {
-        width: 65px;
-        height: 65px;
+        width: 75px;
+        height: 75px;
         object-fit: cover;
-        border-radius: 8px;
+        border-radius: 10px;
         box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
     .metric-card { 
