@@ -2,7 +2,7 @@
 
 [!\[KIMEP AI Challenge 2026](https://img.shields.io/badge/KIMEP-AI%20Challenge%202026-blue.svg)](https://kimep.kz)
 \[!\[Track: AI for Social Good](https://img.shields.io/badge/Track-AI%20for%20Social%20Good-green.svg)]()
-[!\[Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[!\[Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 
 **CellSniper AI** is an advanced clinical decision support system designed to help doctors and researchers rapidly analyze tumor cell mutations, identify critical structural vulnerability hubs, and select targeted therapies while preserving healthy tissues.
 
@@ -49,6 +49,9 @@ The platform is validated on de-identified somatic mutation profiles of **30 rea
 1. **Clone the repository:**
 
 ```bash
-   git clone \[https://github.com/YOUR\_USERNAME/CellSniper-AI.git](https://github.com/YOUR\_USERNAME/CellSniper-AI.git)
+   git clone \\\\\\\\\\\\\\\[https://github.com/Alua09/CellSniper-AI.git](https://github.com/Alua09/CellSniper-AI.git)
    cd CellSniper-AI
+
+
+
 
