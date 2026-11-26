@@ -5,6 +5,7 @@ import networkx as nx
 import plotly.graph_objects as go
 import numpy as np
 import streamlit as st
+import base64
 
 # Streamlit Page Configuration
 st.set_page_config(
@@ -13,69 +14,104 @@ st.set_page_config(
     layout="wide"
 )
 
-st.markdown("""
+# Функция для конвертации локального фона в base64
+def get_base64_of_bin_file(bin_file):
+    if os.path.exists(bin_file):
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    return None
+
+bg_path = "back.png" if os.path.exists("back.png") else "C:/KIMEP_AI/back.png"
+bg_base64 = get_base64_of_bin_file(bg_path)
+
+bg_css = f"""
+    background-image: linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.55)), url("data:image/png;base64,{bg_base64}");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+""" if bg_base64 else "background-color: #f8fafc;"
+
+st.markdown(f"""
 <style>
-    .block-container {
-        padding-top: 2.5rem !important;
+    .stApp {{
+        {bg_css}
+    }}
+    .block-container {{
+        padding-top: 3rem !important;
         padding-bottom: 0.5rem !important;
         padding-left: 1.2rem !important;
         padding-right: 1.2rem !important;
-    }
-    h2, h3, h5 {
+    }}
+    h2, h3, h5 {{
         margin-bottom: 0.15rem !important;
         margin-top: 0rem !important;
-    }
-    /* Container for square cancer cell logo */
-    .logo-container {
+    }}
+    /* Красивая премиальная шапка в стиле презентации */
+    .hero-header {{
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid #cbd5e1;
+        border-left: 5px solid #6b2135;
+        border-radius: 12px;
+        padding: 14px 18px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        margin-bottom: 1rem;
         display: flex;
         align-items: center;
-        justify-content: center;
-        padding-top: 2px;
-    }
-    .logo-container img {
-        width: 75px;
-        height: 75px;
+        gap: 18px;
+    }}
+    [data-testid="stSidebar"] div.stButton {{
+        margin-bottom: -10px !important;
+    }}
+    /* Большое крупное лого раковой клетки */
+    .logo-container img {{
+        width: 95px;
+        height: 95px;
         object-fit: cover;
-        border-radius: 10px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
-    .metric-card { 
-        background: #ffffff; 
-        border: 1px solid #e2e8f0; 
+        border-radius: 12px;
+        box-shadow: 0 3px 8px rgba(107,33,53,0.25);
+        border: 2px solid #6b2135;
+    }}
+    .metric-card {{ 
+        background: rgba(255, 255, 255, 0.92); 
+        border: 1px solid #cbd5e1; 
         border-radius: 8px; 
         padding: 10px; 
         box-shadow: 0 2px 4px rgba(0,0,0,0.03); 
         font-size: 11.5px;
         line-height: 1.6;
-    }
-    .hint-banner {
+    }}
+    .hint-banner {{
         font-size: 11px;
-        color: #475569;
-        background-color: #f8fafc;
-        border-left: 3px solid #3b82f6;
+        color: #334155;
+        background-color: rgba(248, 250, 252, 0.9);
+        border-left: 3px solid #0284c7;
         padding: 4px 8px;
         border-radius: 0 6px 6px 0;
         margin-bottom: 6px;
-    }
-    .footer-note {
+    }}
+    .footer-note {{
         font-size: 10.5px;
-        color: #64748b;
+        color: #475569;
         text-align: center;
         margin-top: 8px;
-    }
-    /* Pastel colors for tabs */
-    div[data-baseweb="tab-list"] button:nth-child(1) {
+        background: rgba(255,255,255,0.8);
+        padding: 4px;
+        border-radius: 6px;
+    }}
+    div[data-baseweb="tab-list"] button:nth-child(1) {{
         background-color: #e0f2fe !important;
         color: #0369a1 !important;
         border-radius: 8px 8px 0 0 !important;
         font-weight: 600 !important;
-    }
-    div[data-baseweb="tab-list"] button:nth-child(2) {
+    }}
+    div[data-baseweb="tab-list"] button:nth-child(2) {{
         background-color: #fce7f3 !important;
         color: #be185d !important;
         border-radius: 8px 8px 0 0 !important;
         font-weight: 600 !important;
-    }
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -314,19 +350,25 @@ Authors: Alua Tolegenova & Danaiya Anitova & Ayazhan Kanayeva
 =================================================="""
 
 
-# Project header with square logo and team / KIMEP AI Challenge metadata
-header_col1, header_col2 = st.columns([0.09, 0.91])
-with header_col1:
-    if os.path.exists("images.jpeg"):
-        st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-        st.image("images.jpeg")
-        st.markdown('</div>', unsafe_allow_html=True)
-with header_col2:
-    st.markdown("""
-    ### 🧬 CellSniper AI <span style="font-size: 11px; color: #2563eb; background: #eff6ff; padding: 3px 10px; border-radius: 6px; font-weight: 600;">[Team: The Snipers | KIMEP AI Challenge 2026]</span>
-    *Precision Clinical Decision Support System via 3D Network Topology & OncoKB Mapping.*<br>
-    <span style="font-size: 11px; color: #64748b;">💡 Clinical Decision Support System: identifying key tumor gene hubs in 3D space and matching targeted therapies.</span>
-    """, unsafe_allow_html=True)
+# Project header with enlarged square logo inside a premium card
+if os.path.exists("images.jpeg"):
+    img_base64 = get_base64_of_bin_file("images.jpeg")
+    img_tag = f'<img src="data:image/jpeg;base64,{img_base64}">' if img_base64 else ''
+else:
+    img_tag = ''
+
+st.markdown(f"""
+<div class="hero-header">
+    <div class="logo-container">
+        {img_tag}
+    </div>
+    <div>
+        <h3 style="margin: 0; color: #0f172a;">🧬 CellSniper AI <span style="font-size: 11px; color: #ffffff; background: #6b2135; padding: 3px 10px; border-radius: 6px; font-weight: 600;">Team: The Snipers | KIMEP AI Challenge 2026</span></h3>
+        <p style="margin: 3px 0 2px 0; font-size: 13px; font-weight: 500; color: #334155;">Precision Clinical Decision Support System via 3D Network Topology & OncoKB Mapping.</p>
+        <span style="font-size: 11px; color: #0284c7; font-weight: 500;">💡 Clinical Decision Support System: identifying key tumor gene hubs in 3D space and matching targeted therapies.</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 st.markdown("---")
 
