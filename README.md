@@ -1,10 +1,10 @@
 # 🧬 CellSniper AI: Precision Clinical Decision Support System
 
-[![KIMEP AI Challenge 2026](https://img.shields.io/badge/KIMEP-AI_Challenge_2026-blue.svg)](https://kimep.kz) [![Track: AI for Social Good](https://img.shields.io/badge/Track-AI%20for%20Social%20Good-green.svg)](https://kimep.kz) [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![WAICY 2026](https://img.shields.io/badge/WAICY-2026-blue.svg)](https://www.waicy.org) [![Track: AI Showcase](https://img.shields.io/badge/Track-AI%20Showcase-green.svg)](https://www.waicy.org) [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 
 **CellSniper AI** is an advanced clinical decision support system designed to help doctors and researchers rapidly analyze tumor cell mutations, identify critical structural vulnerability hubs, and select targeted therapies while preserving healthy tissues.
 
-Developed for the **KIMEP AI Challenge 2026** (AI for Social Good / Healthcare Track).
+Developed for the **WAICY 2026** (AI Showcase Track).
 
 ---
 
@@ -12,7 +12,6 @@ Developed for the **KIMEP AI Challenge 2026** (AI for Social Good / Healthcare T
 
 - **Alua Tolegenova** — Gymnasium #18, Almaty, Kazakhstan
 - **Danaiya Anitova** — Nazarbayev Intellectual School of Physics and Mathematics (NIS Almaty-Medeu), Almaty, Kazakhstan
-- **Ayazhan Kanayeva** — Nazarbayev Intellectual School of Physics and Mathematics (NIS Almaty-Medeu), Almaty, Kazakhstan
 
 ---
 
