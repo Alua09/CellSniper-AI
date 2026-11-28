@@ -33,7 +33,7 @@ The platform is validated on de-identified somatic mutation profiles of 30 real 
 
 ## 🛠️ Technology Stack
 
-- **Frontend & UI:** Gradio (Interactive web application)
+- **Frontend & UI:** Streamlit (Interactive web application)
 - **Graph Theory & Analytics:** NetworkX (Betweenness Centrality algorithms)
 - **3D Spatial Visualization:** Plotly (Interactive 3D cell membrane & node mapping)
 - **Data Processing:** Pandas, NumPy
